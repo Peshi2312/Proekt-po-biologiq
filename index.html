@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Clean the Ocean</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="game-root">
+      <header class="top-bar">
+        <div class="title-block">
+          <span class="logo">🐟</span>
+          <div>
+            <h1>Clean the Ocean</h1>
+            <p class="subtitle">Collect trash, avoid toxins, and restore ocean life.</p>
+          </div>
+        </div>
+        <div class="hud-inline">
+          <div class="score-display">
+            Score:
+            <span id="scoreValue">0</span>
+          </div>
+          <div class="health-bar">
+            <span class="label">Ocean Health</span>
+            <div class="bar-shell">
+              <div id="healthFill" class="bar-fill"></div>
+            </div>
+            <span id="healthPercent" class="percent">0%</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-layout">
+        <section class="canvas-panel" aria-label="Ocean view">
+          <canvas
+            id="gameCanvas"
+            width="900"
+            height="540"
+            aria-label="Clean the Ocean game canvas"
+          ></canvas>
+          <div class="controls-hint">
+            <strong>Move:</strong> WASD / Arrow keys &nbsp;·&nbsp;
+            <strong>Optional:</strong> move towards mouse cursor
+          </div>
+        </section>
+
+        <aside class="side-panel">
+          <section class="info-card">
+            <h2>Mission</h2>
+            <p>
+              Guide the little fish through a polluted ocean. Collect floating trash to earn points
+              and heal the ocean, but avoid toxic clouds that harm you and spread pollution.
+            </p>
+          </section>
+          <section class="info-card">
+            <h2>Tips</h2>
+            <ul>
+              <li>Collect trash items to increase score and ocean health.</li>
+              <li>Avoid dark pollution clouds – they damage you and the ocean.</li>
+              <li>Watch marine animals; they are friendly but can block your path.</li>
+              <li>
+                As the ocean recovers, water becomes clearer and coral starts to grow again.
+              </li>
+            </ul>
+          </section>
+        </aside>
+      </main>
+
+      <div id="startScreen" class="screen-overlay">
+        <div class="overlay-card">
+          <h2>Clean the Ocean</h2>
+          <p>
+            Our oceans are filling with plastic and toxic pollution. Swim as a brave little fish,
+            collect as much trash as you can, and bring life back to the reef.
+          </p>
+          <button id="startButton" class="primary-btn">Start Cleaning</button>
+        </div>
+      </div>
+
+      <div id="gameOverScreen" class="screen-overlay hidden">
+        <div class="overlay-card">
+          <h2>Ocean Overwhelmed</h2>
+          <p id="gameOverMessage">
+            Pollution has become too strong and the ocean health has collapsed.
+          </p>
+          <p class="final-score">
+            Final score:
+            <span id="finalScoreValue">0</span>
+          </p>
+          <button id="restartButton" class="primary-btn">Try Again</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>
+        Clean the Ocean is a small educational game about marine pollution, plastic waste, and the
+        importance of healthy oceans.
+      </p>
+    </footer>
+
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
+
