@@ -6,6 +6,7 @@ import {
   TrashItem,
   PollutionCloud,
   MarineAnimal,
+  Bomb,
   circleCollision,
 } from "./entities.js";
 
@@ -36,6 +37,8 @@ let player;
 let trashItems = [];
 let pollutionClouds = [];
 let animals = [];
+let bombs = [];
+let bombSpawnTimer = 0;
 let score = 0;
 let oceanHealth = 60;
 let pollutionLevel = 40; // abstract pollution index (0-100)
@@ -85,6 +88,8 @@ function resetGame() {
   trashItems = [];
   pollutionClouds = [];
   animals = [];
+  bombs = [];
+  bombSpawnTimer = Math.random() * 2 + 1; // Random initial spawn time between 1-3 seconds (much earlier)
   score = 0;
   oceanHealth = 60;
   pollutionLevel = 40;
@@ -94,9 +99,10 @@ function resetGame() {
 }
 
 function spawnInitialEntities() {
-  for (let i = 0; i < 18; i++) spawnTrash();
+  for (let i = 0; i < 24; i++) spawnTrash();
   for (let i = 0; i < 6; i++) spawnPollutionCloud();
   for (let i = 0; i < 10; i++) spawnAnimal();
+  // No initial bombs - they spawn randomly over time
 }
 
 function spawnTrash() {
@@ -124,6 +130,13 @@ function spawnAnimal() {
   animals.push(new MarineAnimal(x, y, kind));
 }
 
+function spawnBomb() {
+  const padding = 60;
+  const x = padding + Math.random() * (canvas.width - padding * 2);
+  const y = padding + Math.random() * (canvas.height - padding * 2);
+  bombs.push(new Bomb(x, y));
+}
+
 // ---------------------------------------------
 // HUD and state updates
 // ---------------------------------------------
@@ -137,27 +150,34 @@ function updateHUD() {
 
 function updateSystems(dt) {
   // Trash spawn increases over time
-  if (Math.random() < 0.5 * dt) {
+  if (Math.random() < 0.2 * dt) {
     spawnTrash();
   }
 
   // Occasionally spawn new pollution clouds, more often as pollution rises
-  const pollutionSpawnChance = 0.05 + pollutionLevel / 4000;
+  const pollutionSpawnChance = 0.05 + pollutionLevel / 8000; // Reduced from 4000
   if (Math.random() < pollutionSpawnChance * dt) {
     spawnPollutionCloud();
   }
 
+  // Handle bomb spawning timer
+  bombSpawnTimer -= dt;
+  if (bombSpawnTimer <= 0) {
+    spawnBomb();
+    bombSpawnTimer = Math.random() * 4 + 2; // Next bomb spawns in 2-6 seconds (much more frequent)
+  }
+
   // Pollution slowly rises based on number of clouds
-  pollutionLevel += pollutionClouds.length * 0.01;
+  pollutionLevel += pollutionClouds.length * 0.005; // Reduced from 0.01
 
   // Ocean health responds to score and pollution
   const cleanBonus = score * 0.0005;
-  const pollutionPenalty = pollutionLevel * 0.003;
+  const pollutionPenalty = pollutionLevel * 0.0015; // Increased slightly from 0.001
   oceanHealth += (cleanBonus - pollutionPenalty) * dt * 60;
 
   // Extra penalty if clouds are many
   if (pollutionClouds.length > 18) {
-    oceanHealth -= (pollutionClouds.length - 18) * 0.03 * (dt * 60);
+    oceanHealth -= (pollutionClouds.length - 18) * 0.0075 * (dt * 60); // Increased slightly from 0.005
   }
 
   if (oceanHealth <= 0) {
@@ -267,6 +287,9 @@ function update(dt, time) {
 
   pollutionClouds.forEach((cloud) => cloud.update(dt, canvas.width, canvas.height));
   animals.forEach((a) => a.update(dt, canvas.width, canvas.height));
+  
+  // Update bombs and remove expired ones
+  bombs = bombs.filter((bomb) => !bomb.update(dt, canvas.width, canvas.height));
 
   // Trash collection
   for (let i = trashItems.length - 1; i >= 0; i--) {
@@ -274,7 +297,7 @@ function update(dt, time) {
     if (circleCollision(player.pos, player.radius, item.pos, item.radius)) {
       trashItems.splice(i, 1);
       score += 10;
-      oceanHealth += 2.5;
+      oceanHealth += 3.5; // Increased from 2.5
       pollutionLevel -= 1.2;
     }
   }
@@ -288,8 +311,16 @@ function update(dt, time) {
     }
   }
   if (inCloud) {
-    oceanHealth -= 12 * dt;
-    pollutionLevel += 10 * dt;
+    oceanHealth -= 3 * dt; // Increased slightly from 2 for a bit more challenge
+    pollutionLevel += 5 * dt; // Reduced from 10
+  }
+
+  // Bomb collision - instant death!
+  for (const bomb of bombs) {
+    if (circleCollision(player.pos, player.radius, bomb.pos, bomb.radius)) {
+      endGame();
+      break;
+    }
   }
 
   pollutionLevel = clamp(pollutionLevel, 0, 100);
@@ -304,6 +335,7 @@ function render(time) {
   trashItems.forEach((item) => item.draw(ctx, time));
   pollutionClouds.forEach((cloud) => cloud.draw(ctx, time));
   animals.forEach((a) => a.draw(ctx, time));
+  bombs.forEach((bomb) => bomb.draw(ctx, time));
   player && player.draw(ctx, oceanHealth / 100);
 }
 

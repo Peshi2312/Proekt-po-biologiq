@@ -46,9 +46,9 @@ export class PlayerFish {
     this.pos = new Vector2(x, y);
     this.vel = new Vector2(0, 0);
     this.radius = 16;
-    this.maxSpeed = 220;
-    this.accel = 480;
-    this.friction = 0.9;
+    this.maxSpeed = 650; // Increased from 500 for even faster movement
+    this.accel = 1300; // Increased from 1000 for even faster acceleration
+    this.friction = 0.95; // Increased from 0.9 to make slowdown slower (more responsive)
     this.angle = 0; // radians
     this.health = 100;
   }
@@ -287,6 +287,48 @@ export class MarineAnimal {
       ctx.fill();
     }
 
+    ctx.restore();
+  }
+}
+
+export class Bomb {
+  constructor(x, y) {
+    this.pos = new Vector2(x, y);
+    this.radius = 15;
+    this.image = new Image();
+    this.image.src = 'Bomb-png-46599.png';
+    this.lifetime = 3 + Math.random() * 4; // Random lifetime between 3-7 seconds
+    this.age = 0;
+  }
+
+  update(dt, canvasWidth, canvasHeight) {
+    this.age += dt;
+    // Bombs are stationary but have a lifetime
+    return this.age >= this.lifetime; // Return true if bomb should be removed
+  }
+
+  draw(ctx, time) {
+    // Fade out as bomb ages
+    const alpha = Math.max(0.3, 1 - (this.age / this.lifetime) * 0.7);
+    
+    ctx.save();
+    ctx.translate(this.pos.x, this.pos.y);
+    ctx.globalAlpha = alpha;
+    
+    // Draw bomb image if loaded, otherwise draw a red circle
+    if (this.image.complete && this.image.naturalHeight !== 0) {
+      ctx.drawImage(this.image, -this.radius, -this.radius, this.radius * 2, this.radius * 2);
+    } else {
+      // Fallback: draw a red circle with warning
+      ctx.fillStyle = "#ff0000";
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#ffff00";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    
     ctx.restore();
   }
 }
