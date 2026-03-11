@@ -4,6 +4,7 @@
 import {
   PlayerFish,
   TrashItem,
+  GoldenApple,
   PollutionCloud,
   MarineAnimal,
   Bomb,
@@ -19,9 +20,68 @@ const healthPercentEl = document.getElementById("healthPercent");
 
 const startScreen = document.getElementById("startScreen");
 const gameOverScreen = document.getElementById("gameOverScreen");
-const startButton = document.getElementById("startButton");
+const level1Button = document.getElementById("level1Button");
+const level2Button = document.getElementById("level2Button");
+const level3Button = document.getElementById("level3Button");
 const restartButton = document.getElementById("restartButton");
+const nextLevelButton = document.getElementById("nextLevelButton");
+const menuButton = document.getElementById("menuButton");
 const finalScoreValue = document.getElementById("finalScoreValue");
+const gameOverMessageEl = document.getElementById("gameOverMessage");
+const gameOverTitleEl = document.getElementById("gameOverTitle");
+
+const DEFAULT_GAME_OVER_TITLE = "Ocean Overwhelmed";
+const DEFAULT_GAME_OVER_MESSAGE =
+  "Pollution has become too strong and the ocean health has collapsed.";
+const DEFAULT_RESTART_BUTTON_TEXT = "Try Again";
+
+const LEVEL_CONFIG = {
+  1: {
+    // Level 1: health drains slowly, but doesn't ramp up too fast
+    baselineRecovery: 0.06,
+    cleanBonusFactor: 0.0003,
+    pollutionPenaltyFactor: 0.00105,
+    extraCloudPenaltyFactor: 0.004,
+    inCloudDamagePerSecond: 1.4,
+    trashSpawnMultiplier: 0.9,
+  },
+  2: {
+    baselineRecovery: 0.03,
+    cleanBonusFactor: 0.0005,
+    pollutionPenaltyFactor: 0.0022,
+    extraCloudPenaltyFactor: 0.0105,
+    inCloudDamagePerSecond: 3.2,
+    trashSpawnMultiplier: 1.0,
+  },
+  3: {
+    baselineRecovery: 0.01,
+    cleanBonusFactor: 0.00055,
+    pollutionPenaltyFactor: 0.0025,
+    extraCloudPenaltyFactor: 0.0125,
+    inCloudDamagePerSecond: 3.7,
+    trashSpawnMultiplier: 1.25,
+  },
+};
+
+function clampLevel(level) {
+  return level === 1 || level === 2 || level === 3 ? level : 2;
+}
+
+const trashImages = {};
+
+function loadImages() {
+  trashImages.bottle = new Image();
+  trashImages.bottle.src =
+    "b032900de06e5a0e4b8c94343318e2cb-plastic-bottle-garbage.webp";
+  trashImages.bag1 = new Image();
+  // File in repo is named "plastic-bag-cartoon-clipart.png"
+  trashImages.bag1.src = "plastic-bag-cartoon-clipart.png";
+  trashImages.bag2 = new Image();
+  trashImages.bag2.src =
+    "5f42a47ed6838d65656704271346a83c-green-garbage-bag.webp";
+}
+
+loadImages();
 
 const input = {
   up: false,
@@ -39,12 +99,15 @@ let pollutionClouds = [];
 let animals = [];
 let bombs = [];
 let bombSpawnTimer = 0;
+let goldenApple = null;
+let goldenAppleSpawnTimer = 0;
 let score = 0;
 let oceanHealth = 60;
 let pollutionLevel = 40; // abstract pollution index (0-100)
 let elapsed = 0;
 let lastTime = 0;
 let gameState = "start"; // 'start' | 'playing' | 'gameover'
+let currentLevel = 2;
 
 // ---------------------------------------------
 // Input handling
@@ -90,12 +153,32 @@ function resetGame() {
   animals = [];
   bombs = [];
   bombSpawnTimer = Math.random() * 2 + 1; // Random initial spawn time between 1-3 seconds (much earlier)
+  goldenApple = null;
+  goldenAppleSpawnTimer = 8 + Math.random() * 12; // first spawn after ~8-20s
   score = 0;
   oceanHealth = 60;
   pollutionLevel = 40;
   elapsed = 0;
+  if (gameOverTitleEl) gameOverTitleEl.textContent = DEFAULT_GAME_OVER_TITLE;
+  if (gameOverMessageEl) gameOverMessageEl.textContent = DEFAULT_GAME_OVER_MESSAGE;
+  if (restartButton) restartButton.textContent = DEFAULT_RESTART_BUTTON_TEXT;
+  if (nextLevelButton) nextLevelButton.classList.add("hidden");
   spawnInitialEntities();
   updateHUD();
+}
+
+function startGame(level) {
+  currentLevel = clampLevel(level);
+  startScreen.classList.add("hidden");
+  gameOverScreen.classList.add("hidden");
+  resetGame();
+  gameState = "playing";
+}
+
+function showMainMenu() {
+  gameOverScreen.classList.add("hidden");
+  startScreen.classList.remove("hidden");
+  gameState = "start";
 }
 
 function spawnInitialEntities() {
@@ -109,9 +192,11 @@ function spawnTrash() {
   const padding = 40;
   const x = padding + Math.random() * (canvas.width - padding * 2);
   const y = padding + Math.random() * (canvas.height - padding * 2);
-  const kinds = ["bottle", "bag", "can", "net"];
+  // "bottle", "bag1", and "bag2" are image-based trash items.
+  const kinds = ["bottle", "bag1", "bag2", "can", "net"];
   const kind = kinds[Math.floor(Math.random() * kinds.length)];
-  trashItems.push(new TrashItem(x, y, kind));
+  const image = trashImages[kind] ?? null;
+  trashItems.push(new TrashItem(x, y, kind, image));
 }
 
 function spawnPollutionCloud() {
@@ -137,6 +222,13 @@ function spawnBomb() {
   bombs.push(new Bomb(x, y));
 }
 
+function spawnGoldenApple() {
+  const padding = 60;
+  const x = padding + Math.random() * (canvas.width - padding * 2);
+  const y = padding + Math.random() * (canvas.height - padding * 2);
+  goldenApple = new GoldenApple(x, y);
+}
+
 // ---------------------------------------------
 // HUD and state updates
 // ---------------------------------------------
@@ -149,13 +241,18 @@ function updateHUD() {
 }
 
 function updateSystems(dt) {
-  // Trash spawn increases over time
-  if (Math.random() < 0.2 * dt) {
-    spawnTrash();
-  }
+  const levelCfg = LEVEL_CONFIG[currentLevel] ?? LEVEL_CONFIG[2];
+
+  // Trash spawn (rate is "items per second").
+  // and ramps up slowly as the round goes on.
+  const trashSpawnRate =
+    (0.75 + Math.min(1.05, elapsed * 0.018)) * levelCfg.trashSpawnMultiplier;
+  if (Math.random() < trashSpawnRate * dt) spawnTrash();
+  // Small chance to spawn an extra piece for "bursts"
+  if (Math.random() < trashSpawnRate * 0.12 * dt) spawnTrash();
 
   // Occasionally spawn new pollution clouds, more often as pollution rises
-  const pollutionSpawnChance = 0.05 + pollutionLevel / 8000; // Reduced from 4000
+  const pollutionSpawnChance = 0.04 + pollutionLevel / 10000;
   if (Math.random() < pollutionSpawnChance * dt) {
     spawnPollutionCloud();
   }
@@ -164,30 +261,66 @@ function updateSystems(dt) {
   bombSpawnTimer -= dt;
   if (bombSpawnTimer <= 0) {
     spawnBomb();
-    bombSpawnTimer = Math.random() * 4 + 2; // Next bomb spawns in 2-6 seconds (much more frequent)
+    bombSpawnTimer = Math.random() * 2 + 1; // Next bomb spawns in 1-3 seconds (more frequent)
+  }
+
+  // Golden apple spawns at random times (one at a time)
+  if (!goldenApple) {
+    goldenAppleSpawnTimer -= dt;
+    if (goldenAppleSpawnTimer <= 0) {
+      spawnGoldenApple();
+      goldenAppleSpawnTimer = 12 + Math.random() * 18; // next spawn after ~12-30s
+    }
   }
 
   // Pollution slowly rises based on number of clouds
   pollutionLevel += pollutionClouds.length * 0.005; // Reduced from 0.01
 
   // Ocean health responds to score and pollution
-  const cleanBonus = score * 0.0005;
-  const pollutionPenalty = pollutionLevel * 0.0015; // Increased slightly from 0.001
-  oceanHealth += (cleanBonus - pollutionPenalty) * dt * 60;
+  const baselineRecovery = levelCfg.baselineRecovery;
+  const cleanBonus = score * levelCfg.cleanBonusFactor;
+  const pollutionPenalty = pollutionLevel * levelCfg.pollutionPenaltyFactor;
+  oceanHealth += (baselineRecovery + cleanBonus - pollutionPenalty) * dt * 60;
 
   // Extra penalty if clouds are many
   if (pollutionClouds.length > 18) {
-    oceanHealth -= (pollutionClouds.length - 18) * 0.0075 * (dt * 60); // Increased slightly from 0.005
+    oceanHealth -=
+      (pollutionClouds.length - 18) * levelCfg.extraCloudPenaltyFactor * (dt * 60);
   }
 
-  if (oceanHealth <= 0) {
-    endGame();
+  // Win condition: ocean health reaches 100%
+  if (oceanHealth >= 100) {
+    winGame();
   }
+
+  if (oceanHealth <= 0) endGame();
 }
 
-function endGame() {
+function endGame(message = DEFAULT_GAME_OVER_MESSAGE) {
   if (gameState === "gameover") return;
   gameState = "gameover";
+  if (gameOverTitleEl) gameOverTitleEl.textContent = DEFAULT_GAME_OVER_TITLE;
+  if (restartButton) restartButton.textContent = DEFAULT_RESTART_BUTTON_TEXT;
+  if (nextLevelButton) nextLevelButton.classList.add("hidden");
+  if (gameOverMessageEl) gameOverMessageEl.textContent = message;
+  finalScoreValue.textContent = score.toString();
+  gameOverScreen.classList.remove("hidden");
+}
+
+function winGame() {
+  if (gameState !== "playing") return;
+  gameState = "gameover";
+  if (gameOverTitleEl) gameOverTitleEl.textContent = "Ocean Restored!";
+  if (restartButton) restartButton.textContent = "Play Again";
+  if (gameOverMessageEl) gameOverMessageEl.textContent = "You restored the ocean. Great job!";
+  if (nextLevelButton) {
+    if (currentLevel < 3) {
+      nextLevelButton.textContent = "Next Level";
+      nextLevelButton.classList.remove("hidden");
+    } else {
+      nextLevelButton.classList.add("hidden");
+    }
+  }
   finalScoreValue.textContent = score.toString();
   gameOverScreen.classList.remove("hidden");
 }
@@ -279,6 +412,7 @@ function step(timestamp) {
 }
 
 function update(dt, time) {
+  const levelCfg = LEVEL_CONFIG[currentLevel] ?? LEVEL_CONFIG[2];
   player.update(dt, input, canvas.width, canvas.height);
 
   trashItems.forEach((item) => {
@@ -297,9 +431,19 @@ function update(dt, time) {
     if (circleCollision(player.pos, player.radius, item.pos, item.radius)) {
       trashItems.splice(i, 1);
       score += 10;
-      oceanHealth += 3.5; // Increased from 2.5
-      pollutionLevel -= 1.2;
+      oceanHealth += 4.5;
+      pollutionLevel -= 1.6;
     }
+  }
+
+  // Golden apple collection (speed boost)
+  if (
+    goldenApple &&
+    circleCollision(player.pos, player.radius, goldenApple.pos, goldenApple.radius)
+  ) {
+    goldenApple = null;
+    player.speedBoostTime = 9; // seconds
+    player.speedBoostMultiplier = 1.8; // a lot faster
   }
 
   // Pollution collision
@@ -311,14 +455,14 @@ function update(dt, time) {
     }
   }
   if (inCloud) {
-    oceanHealth -= 3 * dt; // Increased slightly from 2 for a bit more challenge
+    oceanHealth -= levelCfg.inCloudDamagePerSecond * dt;
     pollutionLevel += 5 * dt; // Reduced from 10
   }
 
   // Bomb collision - instant death!
   for (const bomb of bombs) {
     if (circleCollision(player.pos, player.radius, bomb.pos, bomb.radius)) {
-      endGame();
+      endGame("You've hit a bomb.");
       break;
     }
   }
@@ -336,6 +480,7 @@ function render(time) {
   pollutionClouds.forEach((cloud) => cloud.draw(ctx, time));
   animals.forEach((a) => a.draw(ctx, time));
   bombs.forEach((bomb) => bomb.draw(ctx, time));
+  goldenApple && goldenApple.draw(ctx, time);
   player && player.draw(ctx, oceanHealth / 100);
 }
 
@@ -358,18 +503,20 @@ function mixColor(c1, c2, t) {
 // Start / restart controls
 // ---------------------------------------------
 
-startButton.addEventListener("click", () => {
-  startScreen.classList.add("hidden");
-  gameOverScreen.classList.add("hidden");
-  resetGame();
-  gameState = "playing";
-});
+level1Button && level1Button.addEventListener("click", () => startGame(1));
+level2Button && level2Button.addEventListener("click", () => startGame(2));
+level3Button && level3Button.addEventListener("click", () => startGame(3));
 
 restartButton.addEventListener("click", () => {
   gameOverScreen.classList.add("hidden");
   resetGame();
   gameState = "playing";
 });
+
+nextLevelButton &&
+  nextLevelButton.addEventListener("click", () => startGame(clampLevel(currentLevel + 1)));
+
+menuButton && menuButton.addEventListener("click", () => showMainMenu());
 
 // Initial render and loop
 resetGame();

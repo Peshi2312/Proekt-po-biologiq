@@ -46,14 +46,25 @@ export class PlayerFish {
     this.pos = new Vector2(x, y);
     this.vel = new Vector2(0, 0);
     this.radius = 16;
-    this.maxSpeed = 650; // Increased from 500 for even faster movement
-    this.accel = 1300; // Increased from 1000 for even faster acceleration
+    this.baseMaxSpeed = 650; // Increased from 500 for even faster movement
+    this.baseAccel = 1300; // Increased from 1000 for even faster acceleration
+    this.maxSpeed = this.baseMaxSpeed;
+    this.accel = this.baseAccel;
     this.friction = 0.95; // Increased from 0.9 to make slowdown slower (more responsive)
     this.angle = 0; // radians
     this.health = 100;
+    this.speedBoostTime = 0;
+    this.speedBoostMultiplier = 1;
   }
 
   update(dt, input, canvasWidth, canvasHeight) {
+    if (this.speedBoostTime > 0) {
+      this.speedBoostTime = Math.max(0, this.speedBoostTime - dt);
+    }
+    const boost = this.speedBoostTime > 0 ? this.speedBoostMultiplier : 1;
+    this.maxSpeed = this.baseMaxSpeed * boost;
+    this.accel = this.baseAccel * boost;
+
     const dir = new Vector2(0, 0);
     if (input.left) dir.x -= 1;
     if (input.right) dir.x += 1;
@@ -137,11 +148,70 @@ export class PlayerFish {
   }
 }
 
-export class TrashItem {
-  constructor(x, y, kind) {
+export class GoldenApple {
+  constructor(x, y) {
     this.pos = new Vector2(x, y);
-    this.radius = 10;
-    this.kind = kind; // 'bottle', 'bag', 'can', 'net'
+    this.radius = 13;
+  }
+
+  draw(ctx, time) {
+    const bob = Math.sin(time * 3.2 + this.pos.x * 0.03) * 2.2;
+    const pulse = 0.85 + Math.sin(time * 6.5) * 0.12;
+
+    ctx.save();
+    ctx.translate(this.pos.x, this.pos.y + bob);
+
+    // glow
+    const glowR = this.radius * 2.4;
+    const glow = ctx.createRadialGradient(0, 0, this.radius * 0.3, 0, 0, glowR);
+    glow.addColorStop(0, "rgba(255, 220, 90, 0.55)");
+    glow.addColorStop(1, "rgba(255, 220, 90, 0)");
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // apple body
+    const r = this.radius * pulse;
+    const body = ctx.createRadialGradient(-r * 0.2, -r * 0.2, r * 0.2, 0, 0, r);
+    body.addColorStop(0, "rgba(255, 245, 200, 1)");
+    body.addColorStop(1, "rgba(232, 170, 30, 1)");
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // highlight
+    ctx.fillStyle = "rgba(255, 255, 255, 0.55)";
+    ctx.beginPath();
+    ctx.ellipse(-r * 0.25, -r * 0.25, r * 0.35, r * 0.25, -0.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // leaf
+    ctx.fillStyle = "rgba(70, 200, 110, 0.95)";
+    ctx.beginPath();
+    ctx.ellipse(r * 0.25, -r * 0.85, r * 0.5, r * 0.22, -0.6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // stem
+    ctx.strokeStyle = "rgba(110, 70, 25, 0.9)";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 0.65);
+    ctx.lineTo(0, -r * 1.05);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}
+
+export class TrashItem {
+  constructor(x, y, kind, image = null) {
+    this.pos = new Vector2(x, y);
+    this.radius = 14;
+    this.kind = kind; // 'bottle', 'bag1', 'bag2', 'can', 'net'
+    this.image = image;
     this.drift = (Math.random() - 0.5) * 18;
   }
 
@@ -149,6 +219,14 @@ export class TrashItem {
     const bob = Math.sin(time * 2 + this.pos.x * 0.02) * 2;
     ctx.save();
     ctx.translate(this.pos.x, this.pos.y + bob);
+
+    // Prefer the actual image asset when provided + loaded.
+    if (this.image && this.image.complete && this.image.naturalHeight !== 0) {
+      const size = this.radius * 2.4;
+      ctx.drawImage(this.image, -size / 2, -size / 2, size, size);
+      ctx.restore();
+      return;
+    }
 
     switch (this.kind) {
       case "bottle":
@@ -158,6 +236,8 @@ export class TrashItem {
         ctx.fillRect(-2, -13, 4, 4);
         break;
       case "bag":
+      case "bag1":
+      case "bag2":
         ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
         ctx.beginPath();
         ctx.moveTo(-8, -8);

@@ -69,18 +69,23 @@
 
       <div id="startScreen" class="screen-overlay">
         <div class="overlay-card">
-          <h2>Clean the Ocean</h2>
+          <h2>Main Menu</h2>
           <p>
             Our oceans are filling with plastic and toxic pollution. Swim as a brave little fish,
             collect as much trash as you can, and bring life back to the reef.
           </p>
-          <button id="startButton" class="primary-btn">Start Cleaning</button>
+          <p style="margin: 14px 0 10px"><strong>Select a level:</strong></p>
+          <div style="display: grid; gap: 10px">
+            <button id="level1Button" class="primary-btn">Level 1 (easy)</button>
+            <button id="level2Button" class="primary-btn">Level 2 (normal)</button>
+            <button id="level3Button" class="primary-btn">Level 3 (hard)</button>
+          </div>
         </div>
       </div>
 
       <div id="gameOverScreen" class="screen-overlay hidden">
         <div class="overlay-card">
-          <h2>Ocean Overwhelmed</h2>
+          <h2 id="gameOverTitle">Ocean Overwhelmed</h2>
           <p id="gameOverMessage">
             Pollution has become too strong and the ocean health has collapsed.
           </p>
@@ -88,7 +93,11 @@
             Final score:
             <span id="finalScoreValue">0</span>
           </p>
-          <button id="restartButton" class="primary-btn">Try Again</button>
+          <div style="display: grid; gap: 10px">
+            <button id="restartButton" class="primary-btn">Try Again</button>
+            <button id="nextLevelButton" class="primary-btn">Next Level</button>
+            <button id="menuButton" class="primary-btn">Main Menu</button>
+          </div>
         </div>
       </div>
     </div>
