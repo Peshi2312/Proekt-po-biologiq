@@ -76,7 +76,7 @@ export class PlayerFish {
       this.vel.x += dir.x * this.accel * dt;
       this.vel.y += dir.y * this.accel * dt;
     } else if (input.mouseActive) {
-      // Move towards mouse/touch position
+      // Optional: drift toward mouse
       const toMouse = new Vector2(
         input.mouseX - this.pos.x,
         input.mouseY - this.pos.y,
@@ -87,6 +87,24 @@ export class PlayerFish {
         this.vel.y += toMouse.y * this.accel * 0.5 * dt;
       }
     }
+
+    // Clamp speed
+    const speed = Math.hypot(this.vel.x, this.vel.y);
+    if (speed > this.maxSpeed) {
+      this.vel.x = (this.vel.x / speed) * this.maxSpeed;
+      this.vel.y = (this.vel.y / speed) * this.maxSpeed;
+    }
+
+    // Apply friction
+    this.vel.x *= this.friction;
+    this.vel.y *= this.friction;
+
+    this.pos.x += this.vel.x * dt;
+    this.pos.y += this.vel.y * dt;
+
+    // Keep inside canvas
+    this.pos.x = clamp(this.pos.x, this.radius, canvasWidth - this.radius);
+    this.pos.y = clamp(this.pos.y, this.radius, canvasHeight - this.radius);
 
     // Rotate toward direction of movement
     if (speed > 10) {
