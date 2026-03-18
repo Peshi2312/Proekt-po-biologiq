@@ -31,7 +31,6 @@ const input = {
   mouseActive: false,
   mouseX: canvas.width / 2,
   mouseY: canvas.height / 2,
-  touchActive: false,
 };
 
 // Resize canvas to match display size
@@ -85,12 +84,10 @@ canvas.addEventListener("mousemove", (e) => {
   input.mouseX = e.clientX - rect.left;
   input.mouseY = e.clientY - rect.top;
   input.mouseActive = true;
-  input.touchActive = false;
 });
 
 canvas.addEventListener("mouseleave", () => {
   input.mouseActive = false;
-  input.touchActive = false;
 });
 
 // Touch events for mobile
@@ -101,7 +98,6 @@ canvas.addEventListener("touchstart", (e) => {
   input.mouseX = touch.clientX - rect.left;
   input.mouseY = touch.clientY - rect.top;
   input.mouseActive = true;
-  input.touchActive = true;
 });
 
 canvas.addEventListener("touchmove", (e) => {
@@ -111,13 +107,11 @@ canvas.addEventListener("touchmove", (e) => {
   input.mouseX = touch.clientX - rect.left;
   input.mouseY = touch.clientY - rect.top;
   input.mouseActive = true;
-  input.touchActive = true;
 });
 
 canvas.addEventListener("touchend", (e) => {
   e.preventDefault();
   input.mouseActive = false;
-  input.touchActive = false;
 });
 
 // ---------------------------------------------
