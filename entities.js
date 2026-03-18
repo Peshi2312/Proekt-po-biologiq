@@ -65,36 +65,17 @@ export class PlayerFish {
       this.vel.x += dir.x * this.accel * dt;
       this.vel.y += dir.y * this.accel * dt;
     } else if (input.mouseActive) {
-      if (input.touchActive) {
-        // For touch, move directly to the position
-        this.pos.set(input.mouseX, input.mouseY);
-        this.vel.set(0, 0); // Stop velocity
-        // Clamp to canvas
-        this.pos.x = clamp(this.pos.x, this.radius, canvasWidth - this.radius);
-        this.pos.y = clamp(this.pos.y, this.radius, canvasHeight - this.radius);
-      } else {
-        // Optional: drift toward mouse for desktop
-        const toMouse = new Vector2(
-          input.mouseX - this.pos.x,
-          input.mouseY - this.pos.y,
-        );
-        if (toMouse.length() > 10) {
-          toMouse.normalize();
-          this.vel.x += toMouse.x * this.accel * 0.5 * dt;
-          this.vel.y += toMouse.y * this.accel * 0.5 * dt;
-        }
+      // Move towards mouse/touch position
+      const toMouse = new Vector2(
+        input.mouseX - this.pos.x,
+        input.mouseY - this.pos.y,
+      );
+      if (toMouse.length() > 10) {
+        toMouse.normalize();
+        this.vel.x += toMouse.x * this.accel * 0.5 * dt;
+        this.vel.y += toMouse.y * this.accel * 0.5 * dt;
       }
     }
-
-    // Apply velocity only if not touch or if touch but not active
-    if (!input.touchActive) {
-      this.pos.x += this.vel.x * dt;
-      this.pos.y += this.vel.y * dt;
-    }
-
-    // Keep inside canvas (for velocity movement or after touch set)
-    this.pos.x = clamp(this.pos.x, this.radius, canvasWidth - this.radius);
-    this.pos.y = clamp(this.pos.y, this.radius, canvasHeight - this.radius);
 
     // Rotate toward direction of movement
     if (speed > 10) {
