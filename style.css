@@ -172,6 +172,10 @@ body {
   color: var(--text-muted);
 }
 
+.mobile-controls {
+  display: none;
+}
+
 .side-panel {
   display: flex;
   flex-direction: column;
@@ -299,6 +303,71 @@ body {
     justify-content: space-between;
     flex-wrap: wrap;
     row-gap: 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  .side-panel {
+    display: none;
+  }
+
+  .controls-hint {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .desktop-controls {
+    display: none;
+  }
+
+  .mobile-controls {
+    display: inline;
+  }
+
+  .info-card {
+    font-size: 12px;
+  }
+
+  .overlay-card {
+    max-width: 90vw;
+    padding: 16px 20px 14px;
+  }
+
+  .primary-btn {
+    padding: 6px 16px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  #game-root {
+    margin: 5px;
+    padding: 10px 12px 8px;
+  }
+
+  .title-block h1 {
+    font-size: 18px;
+  }
+
+  .subtitle {
+    font-size: 11px;
+  }
+
+  .hud-inline {
+    font-size: 12px;
+  }
+
+  .bar-shell {
+    width: 120px;
+    height: 8px;
+  }
+
+  .canvas-panel {
+    padding: 8px;
+  }
+
+  .controls-hint {
+    font-size: 9px;
   }
 }
 
