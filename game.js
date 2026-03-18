@@ -93,19 +93,6 @@ const input = {
   mouseY: canvas.height / 2,
 };
 
-// Resize canvas to match display size
-function resizeCanvas() {
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width;
-  canvas.height = rect.height;
-}
-
-// Initial resize
-resizeCanvas();
-
-// Resize on window resize
-window.addEventListener('resize', resizeCanvas);
-
 let player;
 let trashItems = [];
 let pollutionClouds = [];
@@ -150,30 +137,6 @@ canvas.addEventListener("mousemove", (e) => {
 });
 
 canvas.addEventListener("mouseleave", () => {
-  input.mouseActive = false;
-});
-
-// Touch events for mobile
-canvas.addEventListener("touchstart", (e) => {
-  e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const touch = e.touches[0];
-  input.mouseX = touch.clientX - rect.left;
-  input.mouseY = touch.clientY - rect.top;
-  input.mouseActive = true;
-});
-
-canvas.addEventListener("touchmove", (e) => {
-  e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const touch = e.touches[0];
-  input.mouseX = touch.clientX - rect.left;
-  input.mouseY = touch.clientY - rect.top;
-  input.mouseActive = true;
-});
-
-canvas.addEventListener("touchend", (e) => {
-  e.preventDefault();
   input.mouseActive = false;
 });
 
