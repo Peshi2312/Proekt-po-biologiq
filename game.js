@@ -47,8 +47,6 @@ resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
 let player;
-
-let player;
 let trashItems = [];
 let pollutionClouds = [];
 let animals = [];
