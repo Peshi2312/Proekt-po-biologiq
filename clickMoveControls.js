@@ -1,363 +1,242 @@
 /**
  * clickMoveControls.js
+ * Adds click-to-move (desktop) and touch-to-move (mobile) controls to the game.
  * 
- * Adds click-to-move (desktop) and touch-to-move (mobile) controls for the game.
+ * The player can click or touch anywhere on the canvas to make the fish move toward that position.
+ * Movement continues while the pointer is held, and stops when released or target is reached.
  * 
- * BEHAVIOR:
- * - On desktop: Click and drag on the canvas to move the fish toward the cursor.
- * - On mobile: Touch and drag on the canvas to move the fish toward your finger.
- * 
- * IMPLEMENTATION:
- * - Detects click/touch position and compares it to fish position.
- * - Dispatches keyboard events (ArrowUp, ArrowDown, ArrowLeft, ArrowRight)
- *   to integrate with existing game input handler.
- * - Does NOT modify movement logic; only adds input simulation layer.
- * 
- * Keyboard input object expected:
- * - input.up, input.down, input.left, input.right (boolean flags)
- * - Handled by existing game.js keydown/keyup listeners
+ * IMPORTANT: This system only dispatches keyboard events. It does NOT modify game logic.
  */
 
 (function initClickMoveControls() {
-  // ============================================================================
-  // STATE TRACKING
-  // ============================================================================
+  // Wait for canvas and player to be initialized
+  setTimeout(function setupClickMoveControls() {
+    const canvas = document.getElementById("gameCanvas");
+    if (!canvas) return;
 
-  let isMoving = false; // Whether click/touch is currently active
-  let targetX = 0;
-  let targetY = 0;
+    // Configuration
+    const STOP_DISTANCE_THRESHOLD = 30; // pixels - distance at which to stop moving
+    const CHECK_INTERVAL = 50; // ms - how often to update direction
 
-  // Track which directions are currently active to avoid duplicate key events
-  const activeDirections = {
-    up: false,
-    down: false,
-    left: false,
-    right: false,
-  };
+    // State
+    let isPointerDown = false;
+    let targetX = null;
+    let targetY = null;
+    let updateIntervalId = null;
 
-  // ============================================================================
-  // UTILITY FUNCTIONS
-  // ============================================================================
+    /**
+     * Get canvas-relative coordinates from a pointer event
+     */
+    function getCanvasCoords(event) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+      const clientY = event.touches ? event.touches[0].clientY : event.clientY;
 
-  /**
-   * Get canvas element and its bounding rectangle
-   */
-  function getCanvasInfo() {
-    const canvas = document.getElementById('gameCanvas');
-    if (!canvas) return null;
-    return {
-      element: canvas,
-      rect: canvas.getBoundingClientRect(),
-    };
-  }
-
-  /**
-   * Get player position from the global scope
-   * The player is created in game.js and stored in the global scope
-   */
-  function getPlayerPosition() {
-    // In game.js, player is declared as: let player;
-    // We access it via window.player since it's declared in global scope
-    if (typeof player !== 'undefined' && player) {
-      return { x: player.pos.x, y: player.pos.y };
-    }
-    return null;
-  }
-
-  /**
-   * Dispatch a keyboard event to simulate key press
-   * @param {string} key - The key to simulate (e.g., 'ArrowUp')
-   * @param {string} type - 'keydown' or 'keyup'
-   */
-  function dispatchKeyEvent(key, type) {
-    const event = new KeyboardEvent(type, {
-      key: key,
-      code: key,
-      bubbles: true,
-      cancelable: true,
-    });
-    window.dispatchEvent(event);
-  }
-
-  /**
-   * Calculate direction from fish position to target position
-   * Returns normalized direction (x, y from -1 to 1) and distance
-   */
-  function calculateDirection(fishPos, targetPos) {
-    const dx = targetPos.x - fishPos.x;
-    const dy = targetPos.y - fishPos.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    // If fish is very close to target, consider it reached
-    if (distance < 10) {
-      return { x: 0, y: 0, distance };
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top,
+      };
     }
 
-    // Normalize direction
-    return {
-      x: dx / distance,
-      y: dy / distance,
-      distance,
-    };
-  }
-
-  /**
-   * Update keyboard input based on direction
-   * Uses threshold to determine which keys to press
-   */
-  function updateKeyboardInput(direction) {
-    const THRESHOLD = 0.3; // Sensitivity threshold (0-1 scale)
-    // Lower threshold = more responsive, more directions activate at once
-
-    // Determine which directions should be active based on normalized direction
-    const newDirections = {
-      up: direction.y < -THRESHOLD,
-      down: direction.y > THRESHOLD,
-      left: direction.x < -THRESHOLD,
-      right: direction.x > THRESHOLD,
-    };
-
-    // Dispatch keydown for newly active directions
-    if (!activeDirections.up && newDirections.up) {
-      dispatchKeyEvent('ArrowUp', 'keydown');
-    }
-    if (!activeDirections.down && newDirections.down) {
-      dispatchKeyEvent('ArrowDown', 'keydown');
-    }
-    if (!activeDirections.left && newDirections.left) {
-      dispatchKeyEvent('ArrowLeft', 'keydown');
-    }
-    if (!activeDirections.right && newDirections.right) {
-      dispatchKeyEvent('ArrowRight', 'keydown');
+    /**
+     * Dispatch a keyboard event to simulate arrow key press
+     */
+    function dispatchKeyboardEvent(key, type = "keydown") {
+      const event = new KeyboardEvent(type, {
+        key: key,
+        code: `Arrow${key.replace("Arrow", "")}`,
+        keyCode: {
+          ArrowUp: 38,
+          ArrowDown: 40,
+          ArrowLeft: 37,
+          ArrowRight: 39,
+        }[key],
+        which: {
+          ArrowUp: 38,
+          ArrowDown: 40,
+          ArrowLeft: 37,
+          ArrowRight: 39,
+        }[key],
+        bubbles: true,
+        cancelable: true,
+      });
+      document.dispatchEvent(event);
     }
 
-    // Dispatch keyup for directions that became inactive
-    if (activeDirections.up && !newDirections.up) {
-      dispatchKeyEvent('ArrowUp', 'keyup');
-    }
-    if (activeDirections.down && !newDirections.down) {
-      dispatchKeyEvent('ArrowDown', 'keyup');
-    }
-    if (activeDirections.left && !newDirections.left) {
-      dispatchKeyEvent('ArrowLeft', 'keyup');
-    }
-    if (activeDirections.right && !newDirections.right) {
-      dispatchKeyEvent('ArrowRight', 'keyup');
+    /**
+     * Stop all movement by firing keyup events for all arrow keys
+     */
+    function stopAllMovement() {
+      ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].forEach((key) => {
+        dispatchKeyboardEvent(key, "keyup");
+      });
     }
 
-    // Update state
-    Object.assign(activeDirections, newDirections);
-  }
+    /**
+     * Update movement direction based on player and target positions
+     */
+    function updateMovementDirection() {
+      // Access global player object (set by game.js)
+      if (typeof player === "undefined") return;
 
-  /**
-   * Stop all movement (release all keys)
-   */
-  function stopAllMovement() {
-    if (activeDirections.up) dispatchKeyEvent('ArrowUp', 'keyup');
-    if (activeDirections.down) dispatchKeyEvent('ArrowDown', 'keyup');
-    if (activeDirections.left) dispatchKeyEvent('ArrowLeft', 'keyup');
-    if (activeDirections.right) dispatchKeyEvent('ArrowRight', 'keyup');
+      const playerX = player.pos.x;
+      const playerY = player.pos.y;
+      const distanceToTarget = Math.hypot(
+        targetX - playerX,
+        targetY - playerY
+      );
 
-    Object.assign(activeDirections, {
-      up: false,
-      down: false,
-      left: false,
-      right: false,
-    });
-  }
+      // Stop if close enough to target
+      if (distanceToTarget < STOP_DISTANCE_THRESHOLD) {
+        stopAllMovement();
+        isPointerDown = false;
+        targetX = null;
+        targetY = null;
+        clearInterval(updateIntervalId);
+        return;
+      }
 
-  /**
-   * Convert mouse/touch coordinates to canvas coordinates
-   */
-  function getPointerCanvasCoords(clientX, clientY) {
-    const canvasInfo = getCanvasInfo();
-    if (!canvasInfo) return null;
+      // Determine direction(s) needed
+      const dX = targetX - playerX;
+      const dY = targetY - playerY;
 
-    const x = clientX - canvasInfo.rect.left;
-    const y = clientY - canvasInfo.rect.top;
+      // Calculate angle to target
+      const angle = Math.atan2(dY, dX);
 
-    // Clamp to canvas bounds
-    return {
-      x: Math.max(0, Math.min(x, canvasInfo.element.width)),
-      y: Math.max(0, Math.min(y, canvasInfo.element.height)),
-    };
-  }
+      // Define 8 zones: each 45 degrees
+      // Zone 0: right (0°), Zone 1: down-right (45°), Zone 2: down (90°), etc.
+      const zone = Math.round(angle / (Math.PI / 4)) & 7; // & 7 wraps around 0-7
 
-  /**
-   * Animation loop: continuously update movement toward target
-   * This runs even if user doesn't move pointer, ensures smooth motion
-   */
-  function updateMovement() {
-    if (!isMoving) return;
-
-    const playerPos = getPlayerPosition();
-    if (!playerPos) return;
-
-    const direction = calculateDirection(playerPos, { x: targetX, y: targetY });
-
-    // If reached target, stop movement
-    if (direction.distance < 10) {
+      // Stop all keys first
       stopAllMovement();
-      isMoving = false;
-      return;
+
+      // Dispatch appropriate keys based on zone
+      // Using more relaxed diagonals for smooth 8-directional movement
+      switch (zone) {
+        case 0: // Right (0°)
+          dispatchKeyboardEvent("ArrowRight", "keydown");
+          break;
+        case 1: // Down-Right (45°)
+          dispatchKeyboardEvent("ArrowRight", "keydown");
+          dispatchKeyboardEvent("ArrowDown", "keydown");
+          break;
+        case 2: // Down (90°)
+          dispatchKeyboardEvent("ArrowDown", "keydown");
+          break;
+        case 3: // Down-Left (135°)
+          dispatchKeyboardEvent("ArrowLeft", "keydown");
+          dispatchKeyboardEvent("ArrowDown", "keydown");
+          break;
+        case 4: // Left (180°)
+          dispatchKeyboardEvent("ArrowLeft", "keydown");
+          break;
+        case 5: // Up-Left (-135°)
+          dispatchKeyboardEvent("ArrowLeft", "keydown");
+          dispatchKeyboardEvent("ArrowUp", "keydown");
+          break;
+        case 6: // Up (-90°)
+          dispatchKeyboardEvent("ArrowUp", "keydown");
+          break;
+        case 7: // Up-Right (-45°)
+          dispatchKeyboardEvent("ArrowRight", "keydown");
+          dispatchKeyboardEvent("ArrowUp", "keydown");
+          break;
+      }
     }
 
-    updateKeyboardInput(direction);
-  }
+    /**
+     * Mouse down - set target and start movement update loop
+     */
+    function handleMouseDown(e) {
+      if (e.button !== 0) return; // Only left button
+      isPointerDown = true;
+      const coords = getCanvasCoords(e);
+      targetX = coords.x;
+      targetY = coords.y;
 
-  // ============================================================================
-  // MOUSE EVENT HANDLERS
-  // ============================================================================
+      // Start checking direction periodically
+      clearInterval(updateIntervalId);
+      updateMovementDirection(); // First update immediately
+      updateIntervalId = setInterval(updateMovementDirection, CHECK_INTERVAL);
+    }
 
-  function handleMouseDown(e) {
-    // Only respond to primary button (left click)
-    if (e.button !== 0) return;
-
-    const canvasInfo = getCanvasInfo();
-    if (!canvasInfo) return;
-
-    isMoving = true;
-
-    const coords = getPointerCanvasCoords(e.clientX, e.clientY);
-    if (coords) {
+    /**
+     * Mouse move - update target while button is held
+     */
+    function handleMouseMove(e) {
+      if (!isPointerDown) return;
+      const coords = getCanvasCoords(e);
       targetX = coords.x;
       targetY = coords.y;
     }
-  }
 
-  function handleMouseMove(e) {
-    if (!isMoving) return;
-
-    const coords = getPointerCanvasCoords(e.clientX, e.clientY);
-    if (coords) {
-      targetX = coords.x;
-      targetY = coords.y;
-    }
-  }
-
-  function handleMouseUp(e) {
-    // Stop movement when mouse button released
-    isMoving = false;
-    stopAllMovement();
-    targetX = 0;
-    targetY = 0;
-  }
-
-  /**
-   * Stop movement if mouse leaves the canvas
-   */
-  function handleMouseLeave(e) {
-    if (isMoving) {
-      isMoving = false;
+    /**
+     * Mouse up - stop movement
+     */
+    function handleMouseUp(e) {
+      if (!isPointerDown) return;
+      isPointerDown = false;
       stopAllMovement();
-      targetX = 0;
-      targetY = 0;
+      clearInterval(updateIntervalId);
+      targetX = null;
+      targetY = null;
     }
-  }
 
-  // ============================================================================
-  // TOUCH EVENT HANDLERS (for mobile)
-  // ============================================================================
-
-  function handleTouchStart(e) {
-    // Prevent page scrolling while interacting with canvas
-    e.preventDefault();
-
-    if (e.touches.length === 0) return;
-    
-    isMoving = true;
-
-    const coords = getPointerCanvasCoords(e.touches[0].clientX, e.touches[0].clientY);
-    if (coords) {
+    /**
+     * Touch start - set target and start movement update loop
+     */
+    function handleTouchStart(e) {
+      if (e.touches.length === 0) return;
+      isPointerDown = true;
+      const coords = getCanvasCoords(e);
       targetX = coords.x;
       targetY = coords.y;
+
+      // Prevent page scrolling during touch
+      e.preventDefault();
+
+      // Start checking direction periodically
+      clearInterval(updateIntervalId);
+      updateMovementDirection(); // First update immediately
+      updateIntervalId = setInterval(updateMovementDirection, CHECK_INTERVAL);
     }
-  }
 
-  function handleTouchMove(e) {
-    if (!isMoving || e.touches.length === 0) return;
-
-    // Prevent page scrolling
-    e.preventDefault();
-
-    const coords = getPointerCanvasCoords(e.touches[0].clientX, e.touches[0].clientY);
-    if (coords) {
+    /**
+     * Touch move - update target while touching
+     */
+    function handleTouchMove(e) {
+      if (!isPointerDown || e.touches.length === 0) return;
+      const coords = getCanvasCoords(e);
       targetX = coords.x;
       targetY = coords.y;
-    }
-  }
 
-  function handleTouchEnd(e) {
-    // Prevent page scrolling
-    e.preventDefault();
-
-    // Stop movement when touch ends
-    isMoving = false;
-    stopAllMovement();
-    targetX = 0;
-    targetY = 0;
-  }
-
-  function handleTouchCancel(e) {
-    // Prevent page scrolling
-    e.preventDefault();
-
-    // Stop movement if touch is cancelled
-    isMoving = false;
-    stopAllMovement();
-    targetX = 0;
-    targetY = 0;
-  }
-
-  // ============================================================================
-  // ANIMATION LOOP
-  // ============================================================================
-
-  /**
-   * Main update loop: processes movement every frame
-   */
-  function update() {
-    updateMovement();
-    requestAnimationFrame(update);
-  }
-
-  // ============================================================================
-  // INITIALIZATION
-  // ============================================================================
-
-  function initialize() {
-    const canvas = document.getElementById('gameCanvas');
-    if (!canvas) {
-      console.warn('clickMoveControls: gameCanvas not found');
-      return;
+      // Prevent page scrolling during touch
+      e.preventDefault();
     }
 
-    // Prevent scrolling while touching canvas
-    canvas.style.touchAction = 'none';
+    /**
+     * Touch end - stop movement
+     */
+    function handleTouchEnd(e) {
+      if (!isPointerDown) return;
+      isPointerDown = false;
+      stopAllMovement();
+      clearInterval(updateIntervalId);
+      targetX = null;
+      targetY = null;
+    }
 
-    // ========== MOUSE EVENT LISTENERS ==========
-    canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseup', handleMouseUp);
-    canvas.addEventListener('mouseleave', handleMouseLeave);
+    // Attach event listeners to canvas
+    canvas.addEventListener("mousedown", handleMouseDown);
+    canvas.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp); // Global to catch releases outside canvas
 
-    // ========== TOUCH EVENT LISTENERS ==========
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
-    canvas.addEventListener('touchcancel', handleTouchCancel, { passive: false });
+    canvas.addEventListener("touchstart", handleTouchStart);
+    canvas.addEventListener("touchmove", handleTouchMove);
+    canvas.addEventListener("touchend", handleTouchEnd);
+    canvas.addEventListener("touchcancel", handleTouchEnd);
 
-    // Start animation loop
-    update();
-
-    console.log('clickMoveControls: Click-to-move and touch-to-move initialized');
-  }
-
-  // Initialize when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialize);
-  } else {
-    initialize();
-  }
-
+    // Prevent scrolling while interacting with canvas on touch devices
+    canvas.style.touchAction = "none";
+  }, 100); // Small delay to ensure canvas and player are initialized
 })();
