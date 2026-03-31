@@ -371,3 +371,54 @@ body {
   }
 }
 
+/* Virtual Joystick Styles */
+.mobile-joystick-container {
+  position: fixed;
+  bottom: 30px;
+  left: 30px;
+  width: 120px;
+  height: 120px;
+  z-index: 100;
+  display: none;
+  touch-action: none;
+}
+
+/* Only show on touch devices with screen width < 900px */
+@media (max-width: 899px) and (hover: none) and (pointer: coarse) {
+  .mobile-joystick-container {
+    display: block;
+  }
+}
+
+.mobile-joystick-base {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(70, 226, 255, 0.4), rgba(70, 226, 255, 0.1));
+  border: 2px solid rgba(70, 226, 255, 0.6);
+  box-shadow: 0 0 20px rgba(70, 226, 255, 0.5), inset 0 0 20px rgba(70, 226, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  left: 0;
+  touch-action: none;
+}
+
+.mobile-joystick-thumb {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #7fffd4, #46e2ff);
+  box-shadow: 0 0 15px rgba(127, 255, 212, 0.8), 0 4px 8px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(127, 255, 212, 0.8);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: box-shadow 0.1s ease-out;
+  touch-action: none;
+}
+
