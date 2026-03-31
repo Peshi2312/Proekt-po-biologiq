@@ -41,9 +41,47 @@
           ></canvas>
           <div class="controls-hint">
             <span class="desktop-controls"><strong>Move:</strong> WASD / Arrow keys &nbsp;·&nbsp; <strong>Optional:</strong> move towards mouse cursor</span>
-            <span class="mobile-controls"><strong>Touch:</strong> Tap or drag to move the fish</span>
+            <span class="mobile-controls"><strong>Touch:</strong> Use the controls below</span>
           </div>
         </section>
+
+        <div class="joycon-strip" id="joyconControls" aria-label="Mobile controls">
+          <div class="joycon left-joycon">
+            <div class="joycon-inner-dot"></div>
+            <div class="dpad">
+              <div class="dpad-top">
+                <button class="dpad-btn dpad-up" data-key="ArrowUp" aria-label="Up">▲</button>
+              </div>
+              <div class="dpad-middle-row">
+                <button class="dpad-btn dpad-left" data-key="ArrowLeft" aria-label="Left">◀</button>
+                <div class="dpad-center-dot"></div>
+                <button class="dpad-btn dpad-right" data-key="ArrowRight" aria-label="Right">▶</button>
+              </div>
+              <div class="dpad-bottom">
+                <button class="dpad-btn dpad-down" data-key="ArrowDown" aria-label="Down">▼</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="joycon-gap"></div>
+
+          <div class="joycon right-joycon">
+            <div class="action-cluster">
+              <div class="action-top">
+                <button class="action-btn action-x" aria-label="X">X</button>
+              </div>
+              <div class="action-middle-row">
+                <button class="action-btn action-y" aria-label="Y">Y</button>
+                <div class="action-center-dot"></div>
+                <button class="action-btn action-a" aria-label="A">A</button>
+              </div>
+              <div class="action-bottom">
+                <button class="action-btn action-b" aria-label="B">B</button>
+              </div>
+            </div>
+            <div class="joycon-inner-dot right-dot"></div>
+          </div>
+        </div>
 
         <aside class="side-panel">
           <section class="info-card">
@@ -113,6 +151,6 @@
     <script src="mobileTouchControls.js"></script>
     <script src="clickMoveControls.js"></script>
     <script src="mobileJoystick.js"></script>
+    <script src="joyconControls.js"></script>
   </body>
 </html>
-

@@ -46,8 +46,8 @@ export class PlayerFish {
     this.pos = new Vector2(x, y);
     this.vel = new Vector2(0, 0);
     this.radius = 16;
-    this.baseMaxSpeed = 650; // Increased from 500 for even faster movement
-    this.baseAccel = 1300; // Increased from 1000 for even faster acceleration
+    this.baseMaxSpeed = 6500; // Increased from 500 for even faster movement
+    this.baseAccel = 2400; // Increased from 1000 for even faster acceleration
     this.maxSpeed = this.baseMaxSpeed;
     this.accel = this.baseAccel;
     this.friction = 0.95; // Increased from 0.9 to make slowdown slower (more responsive)
@@ -431,4 +431,3 @@ function mixColor(c1, c2, t) {
   const b = Math.round(c1.b + (c2.b - c1.b) * t);
   return `rgb(${r}, ${g}, ${b})`;
 }
-

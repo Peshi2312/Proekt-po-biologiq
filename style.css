@@ -1,3 +1,84 @@
+peshkotaralezjko
+peshkotaralezjko2.0
+•
+разпускане
+
+peshkotaralezjko — 17.2.2026 г. 18:26
+da
+BorkoAXT [DBD],  — 17.2.2026 г. 18:26
+
+BorkoAXT [DBD],  — 19.2.2026 г. 14:37
+https://discord.gg/SjbUeQu9y
+BorkoAXT [DBD],  — 8.3.2026 г. 20:42
+https://lovable.dev/projects/c085a10d-4abb-4c66-b96a-2f5730409daa?magic_link=mc_f57b2a40-957e-43a7-a2be-0eb1b23d81bd
+Lovable
+Build software products, using only a chat interface
+https://lovable.dev/projects/c085a10d-4abb-4c66-b96a-2f5730409daa?magic_link=mc_28275e42-207c-49aa-9132-506d41b8b7f5
+Lovable
+Build software products, using only a chat interface
+peshkotaralezjko — 18.3.2026 г. 8:58
+https://peshi2312.github.io/Proekt-po-biologiq/
+peshkotaralezjko — 22.3.2026 г. 20:55
+
+peshkotaralezjko
+ започна обаждане, което продължи няколко секунди. — 24.3.2026 г. 11:42
+peshkotaralezjko
+ започна обаждане, което продължи няколко секунди. — 24.3.2026 г. 11:42
+BorkoAXT [DBD],  — 20:12
+Изображение
+Изображение
+Изображение
+Изображение
+Изображение
+Изображение
+Изображение
+Изображение
+Изображение
+Изображение
+BorkoAXT [DBD],  — 20:29
+// entities.js
+// Defines the core entities used in the Clean the Ocean game.
+
+export class Vector2 {
+  constructor(x = 0, y = 0) {
+    this.x = x;
+
+message.txt
+13 KB
+:root {
+  --bg: #02101b;
+  --bg-panel: #021b2c;
+  --bg-light: #04273b;
+  --accent: #46e2ff;
+  --accent-soft: rgba(70, 226, 255, 0.3);
+
+message.txt
+13 KB
+/**
+ * Inline Joycon Controls
+ * Handles touch/mouse events on the D-pad buttons below the game canvas.
+ * Dispatches ArrowUp/Down/Left/Right keyboard events to control the fish.
+ */
+(function () {
+
+message.txt
+3 KB
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Clean the Ocean</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+message.txt
+7 KB
+﻿
+BorkoAXT
+borkoaxt
+ 
+ 
+ 
+ 
 :root {
   --bg: #02101b;
   --bg-panel: #021b2c;
@@ -371,29 +452,176 @@ body {
   }
 }
 
-/* Virtual Joystick Styles */
+/* Hide old floating joystick — replaced by inline joycon */
 .mobile-joystick-container {
-  position: fixed;
-  bottom: 30px;
-  left: 30px;
-  width: 120px;
-  height: 120px;
-  z-index: 100;
-  display: none;
+  display: none !important;
+}
+
+/* =============================================
+   Inline Joycon Controls
+   ============================================= */
+.joycon-strip {
+  display: none; /* shown via media query on mobile */
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 14px 10px 10px;
+  user-select: none;
+  -webkit-user-select: none;
   touch-action: none;
 }
 
-/* JavaScript controls visibility for touch devices */
-.mobile-joystick-container.show {
-  display: block;
-}
-
-/* Hide on larger screens */
-@media (min-width: 900px) {
-  .mobile-joystick-container {
-    display: none !important;
+@media (max-width: 768px) {
+  .joycon-strip {
+    display: flex;
   }
 }
+
+.joycon-gap {
+  flex: 1;
+  max-width: 60px;
+}
+
+/* Individual joycon body */
+.joycon {
+  background: linear-gradient(160deg, #1a2e3d, #0d1f2d);
+  border: 1px solid rgba(70, 226, 255, 0.25);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 12px;
+  touch-action: none;
+}
+
+.left-joycon {
+  border-radius: 50px 16px 16px 50px;
+  flex-direction: row;
+}
+
+.right-joycon {
+  border-radius: 16px 50px 50px 16px;
+  flex-direction: row;
+}
+
+/* Small grip dot on each joycon */
+.joycon-inner-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #46e2ff, #0a5070);
+  box-shadow: 0 0 6px rgba(70, 226, 255, 0.5);
+  flex-shrink: 0;
+}
+
+/* D-Pad */
+.dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  touch-action: none;
+}
+
+.dpad-top,
+.dpad-bottom,
+.dpad-middle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.dpad-center-dot {
+  width: 22px;
+  height: 22px;
+  background: #0d1f2d;
+  border-radius: 3px;
+}
+
+.dpad-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  border: 1px solid rgba(70, 226, 255, 0.3);
+  background: linear-gradient(160deg, #1e3548, #0f2336);
+  color: var(--accent);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.08s, box-shadow 0.08s, transform 0.06s;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+
+.dpad-btn:active,
+.dpad-btn.pressed {
+  background: linear-gradient(160deg, #0f2336, #091929);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.7), inset 0 2px 4px rgba(0,0,0,0.4);
+  transform: translateY(1px);
+  color: var(--accent-strong);
+}
+
+/* Action cluster (right joycon) */
+.action-cluster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.action-top,
+.action-bottom,
+.action-middle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.action-center-dot {
+  width: 22px;
+  height: 22px;
+  background: #0d1f2d;
+  border-radius: 3px;
+}
+
+.action-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(127, 255, 212, 0.25);
+  background: linear-gradient(160deg, #1e3548, #0f2336);
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.08s, box-shadow 0.08s, transform 0.06s;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+
+.action-btn:active,
+.action-btn.pressed {
+  background: linear-gradient(160deg, #0f2336, #091929);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.7), inset 0 2px 4px rgba(0,0,0,0.4);
+  transform: translateY(1px);
+}
+
+/* Tint each action button */
+.action-x { color: #46e2ff; border-color: rgba(70, 226, 255, 0.35); }
+.action-y { color: #ffb347; border-color: rgba(255, 179, 71, 0.35); }
+.action-a { color: #7fffd4; border-color: rgba(127, 255, 212, 0.35); }
+.action-b { color: #ff5c73; border-color: rgba(255, 92, 115, 0.35); }
 
 .mobile-joystick-base {
   position: absolute;
@@ -426,4 +654,3 @@ body {
   transition: box-shadow 0.1s ease-out;
   touch-action: none;
 }
-
