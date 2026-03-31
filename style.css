@@ -383,10 +383,15 @@ body {
   touch-action: none;
 }
 
-/* Only show on touch devices with screen width < 900px */
-@media (max-width: 899px) and (hover: none) and (pointer: coarse) {
+/* JavaScript controls visibility for touch devices */
+.mobile-joystick-container.show {
+  display: block;
+}
+
+/* Hide on larger screens */
+@media (min-width: 900px) {
   .mobile-joystick-container {
-    display: block;
+    display: none !important;
   }
 }
 

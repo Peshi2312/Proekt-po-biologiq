@@ -201,12 +201,21 @@
    * @param {HTMLElement} container - Joystick container
    */
   function updateJoystickVisibility(container) {
-    container.style.display = shouldShowJoystick() ? 'block' : 'none';
+    if (shouldShowJoystick()) {
+      container.classList.add('show');
+    } else {
+      container.classList.remove('show');
+    }
   }
 
   // Initialize
   const joystick = createJoystick();
   updateJoystickVisibility(joystick.container);
+
+  // Update visibility on window resize (e.g., phone rotation)
+  window.addEventListener('resize', function() {
+    updateJoystickVisibility(joystick.container);
+  });
 
   // Touch event handlers
   joystick.base.addEventListener('touchstart', function(e) {
