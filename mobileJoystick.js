@@ -75,7 +75,7 @@
       cancelable: true
     });
 
-    document.dispatchEvent(event);
+    window.dispatchEvent(event);
   }
 
   /**
