@@ -371,206 +371,55 @@ body {
   }
 }
 
-/* Hide old floating joystick — replaced by inline joycon */
+/* Hide old floating joystick — replaced by inline joystick */
 .mobile-joystick-container {
   display: none !important;
 }
 
 /* =============================================
-   Inline Joycon Controls
+   Inline Joystick
    ============================================= */
-.joycon-strip {
-  display: none; /* shown via media query on mobile */
-  align-items: center;
+.inline-joystick-wrap {
+  display: none;
   justify-content: center;
-  gap: 0;
-  padding: 14px 10px 10px;
+  align-items: center;
+  padding: 18px 10px 14px;
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
 }
 
 @media (max-width: 768px) {
-  .joycon-strip {
+  .inline-joystick-wrap {
     display: flex;
   }
 }
 
-.joycon-gap {
-  flex: 1;
-  max-width: 60px;
-}
-
-/* Individual joycon body */
-.joycon {
-  background: linear-gradient(160deg, #1a2e3d, #0d1f2d);
-  border: 1px solid rgba(70, 226, 255, 0.25);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.07);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 14px 12px;
-  touch-action: none;
-}
-
-.left-joycon {
-  border-radius: 50px 16px 16px 50px;
-  flex-direction: row;
-}
-
-.right-joycon {
-  border-radius: 16px 50px 50px 16px;
-  flex-direction: row;
-}
-
-/* Small grip dot on each joycon */
-.joycon-inner-dot {
-  width: 10px;
-  height: 10px;
+.inline-joystick-base {
+  position: relative;
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #46e2ff, #0a5070);
-  box-shadow: 0 0 6px rgba(70, 226, 255, 0.5);
-  flex-shrink: 0;
-}
-
-/* D-Pad */
-.dpad {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
+  background: radial-gradient(circle at 35% 35%, rgba(70, 226, 255, 0.18), rgba(2, 20, 36, 0.9));
+  border: 2px solid rgba(70, 226, 255, 0.45);
+  box-shadow: 0 0 28px rgba(70, 226, 255, 0.25), inset 0 0 24px rgba(70, 226, 255, 0.08);
   touch-action: none;
-}
-
-.dpad-top,
-.dpad-bottom,
-.dpad-middle-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-}
-
-.dpad-center-dot {
-  width: 22px;
-  height: 22px;
-  background: #0d1f2d;
-  border-radius: 3px;
-}
-
-.dpad-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 6px;
-  border: 1px solid rgba(70, 226, 255, 0.3);
-  background: linear-gradient(160deg, #1e3548, #0f2336);
-  color: var(--accent);
-  font-size: 16px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.08s, box-shadow 0.08s, transform 0.06s;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
-  -webkit-tap-highlight-color: transparent;
-  touch-action: none;
 }
 
-.dpad-btn:active,
-.dpad-btn.pressed {
-  background: linear-gradient(160deg, #0f2336, #091929);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.7), inset 0 2px 4px rgba(0,0,0,0.4);
-  transform: translateY(1px);
-  color: var(--accent-strong);
-}
-
-/* Action cluster (right joycon) */
-.action-cluster {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.action-top,
-.action-bottom,
-.action-middle-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-}
-
-.action-center-dot {
-  width: 22px;
-  height: 22px;
-  background: #0d1f2d;
-  border-radius: 3px;
-}
-
-.action-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid rgba(127, 255, 212, 0.25);
-  background: linear-gradient(160deg, #1e3548, #0f2336);
-  color: var(--accent-strong);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.08s, box-shadow 0.08s, transform 0.06s;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
-  -webkit-tap-highlight-color: transparent;
-  touch-action: none;
-}
-
-.action-btn:active,
-.action-btn.pressed {
-  background: linear-gradient(160deg, #0f2336, #091929);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.7), inset 0 2px 4px rgba(0,0,0,0.4);
-  transform: translateY(1px);
-}
-
-/* Tint each action button */
-.action-x { color: #46e2ff; border-color: rgba(70, 226, 255, 0.35); }
-.action-y { color: #ffb347; border-color: rgba(255, 179, 71, 0.35); }
-.action-a { color: #7fffd4; border-color: rgba(127, 255, 212, 0.35); }
-.action-b { color: #ff5c73; border-color: rgba(255, 92, 115, 0.35); }
-
-.mobile-joystick-base {
+.inline-joystick-thumb {
   position: absolute;
-  width: 120px;
-  height: 120px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, rgba(70, 226, 255, 0.4), rgba(70, 226, 255, 0.1));
-  border: 2px solid rgba(70, 226, 255, 0.6);
-  box-shadow: 0 0 20px rgba(70, 226, 255, 0.5), inset 0 0 20px rgba(70, 226, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  top: 0;
-  left: 0;
-  touch-action: none;
-}
-
-.mobile-joystick-thumb {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #7fffd4, #46e2ff);
-  box-shadow: 0 0 15px rgba(127, 255, 212, 0.8), 0 4px 8px rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(127, 255, 212, 0.8);
+  background: radial-gradient(circle at 32% 32%, #7fffd4, #46e2ff 60%, #1a8ca0);
+  box-shadow: 0 0 18px rgba(127, 255, 212, 0.7), 0 4px 10px rgba(0, 0, 0, 0.5);
+  border: 1.5px solid rgba(127, 255, 212, 0.7);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  cursor: pointer;
   transition: box-shadow 0.1s ease-out;
   touch-action: none;
+  pointer-events: none;
 }
 

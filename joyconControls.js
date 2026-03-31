@@ -1,107 +1,108 @@
 /**
- * Inline Joycon Controls
- * Handles touch/mouse events on the D-pad buttons below the game canvas.
- * Dispatches ArrowUp/Down/Left/Right keyboard events to control the fish.
+ * Inline Joystick Controls
+ * Renders a draggable joystick below the game canvas on touch devices.
+ * Dispatches ArrowUp/Down/Left/Right keyboard events to move the fish.
  */
 (function () {
+  const DEAD_ZONE = 12; // px — ignore tiny movements at centre
+
   function fireKey(key, isDown) {
     const codes = { ArrowUp: 38, ArrowDown: 40, ArrowLeft: 37, ArrowRight: 39 };
     window.dispatchEvent(
       new KeyboardEvent(isDown ? "keydown" : "keyup", {
-        key,
-        code: key,
-        keyCode: codes[key],
-        which: codes[key],
-        bubbles: true,
-        cancelable: true,
+        key, code: key,
+        keyCode: codes[key], which: codes[key],
+        bubbles: true, cancelable: true,
       })
     );
   }
 
-  // Track which keys are currently held so rapid re-fires don't stack
-  const held = new Set();
+  // Track active keys so we only fire events on state changes
+  const held = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
-  function press(key) {
-    if (!held.has(key)) {
-      held.add(key);
-      fireKey(key, true);
-    }
-  }
-
-  function release(key) {
-    if (held.has(key)) {
-      held.delete(key);
-      fireKey(key, false);
+  function setKey(key, active) {
+    if (held[key] !== active) {
+      held[key] = active;
+      fireKey(key, active);
     }
   }
 
   function releaseAll() {
-    held.forEach((key) => fireKey(key, false));
-    held.clear();
+    Object.keys(held).forEach((k) => setKey(k, false));
+  }
+
+  // 8-directional: angle 0° = up, 90° = right, 180°/-180° = down, -90° = left
+  function applyDirection(offsetX, offsetY) {
+    const dist = Math.hypot(offsetX, offsetY);
+    if (dist < DEAD_ZONE) {
+      releaseAll();
+      return;
+    }
+    const angle = Math.atan2(offsetX, -offsetY) * (180 / Math.PI);
+    setKey("ArrowUp",    angle > -112.5 && angle <=  67.5);
+    setKey("ArrowRight", angle >   22.5 && angle <= 157.5);
+    setKey("ArrowDown",  angle >  112.5 || angle <= -112.5);
+    setKey("ArrowLeft",  angle > -157.5 && angle <=  -22.5);
   }
 
   function isTouchDevice() {
     return "ontouchstart" in window || navigator.maxTouchPoints > 0;
   }
 
-  function bindBtn(btn) {
-    const key = btn.dataset.key;
-    if (!key) return; // action buttons (ABXY) are decorative
-
-    function onStart(e) {
-      e.preventDefault();
-      btn.classList.add("pressed");
-      press(key);
-    }
-
-    function onMove(e) {
-      // Prevent scroll from cancelling the button press
-      e.preventDefault();
-    }
-
-    function onEnd(e) {
-      e.preventDefault();
-      btn.classList.remove("pressed");
-      release(key);
-    }
-
-    btn.addEventListener("touchstart", onStart, { passive: false });
-    btn.addEventListener("touchmove",  onMove,  { passive: false });
-    btn.addEventListener("touchend",   onEnd,   { passive: false });
-    btn.addEventListener("touchcancel", onEnd,  { passive: false });
-
-    // Mouse fallback for desktop testing
-    btn.addEventListener("mousedown",  onStart);
-    btn.addEventListener("mouseup",    onEnd);
-    btn.addEventListener("mouseleave", onEnd);
+  function moveThumb(base, thumb, offsetX, offsetY) {
+    const maxR  = (base.offsetWidth - thumb.offsetWidth) / 2;
+    const dist  = Math.hypot(offsetX, offsetY);
+    const ratio = dist > maxR ? maxR / dist : 1;
+    const cx    = offsetX * ratio;
+    const cy    = offsetY * ratio;
+    thumb.style.transform = `translate(calc(-50% + ${cx}px), calc(-50% + ${cy}px))`;
+    applyDirection(cx, cy);
   }
 
   function init() {
-    const strip = document.getElementById("joyconControls");
-    if (!strip) return;
+    const wrap  = document.getElementById("joystickWrap");
+    const base  = document.getElementById("joystickBase");
+    const thumb = document.getElementById("joystickThumb");
+    if (!wrap || !base || !thumb) return;
 
-    // Force-show on touch devices — don't rely solely on the CSS media query,
-    // which can miss phones with unusual viewport widths or zoom levels.
+    // Force-show on touch devices regardless of CSS media query width edge cases
     if (isTouchDevice()) {
-      strip.style.display = "flex";
+      wrap.style.display = "flex";
     }
 
-    // Prevent the whole strip from scrolling the page while the player
-    // is using the controls (critical for real phones).
-    strip.addEventListener("touchmove", function (e) {
+    // Prevent page scroll while using the joystick
+    wrap.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
+
+    function getOffset(touch) {
+      const rect = base.getBoundingClientRect();
+      return {
+        x: touch.clientX - rect.left  - rect.width  / 2,
+        y: touch.clientY - rect.top   - rect.height / 2,
+      };
+    }
+
+    base.addEventListener("touchstart", (e) => {
       e.preventDefault();
+      const { x, y } = getOffset(e.touches[0]);
+      moveThumb(base, thumb, x, y);
     }, { passive: false });
 
-    strip.querySelectorAll(".dpad-btn").forEach(bindBtn);
+    base.addEventListener("touchmove", (e) => {
+      e.preventDefault();
+      const { x, y } = getOffset(e.touches[0]);
+      moveThumb(base, thumb, x, y);
+    }, { passive: false });
 
-    // Release all keys if touch lifts anywhere on the strip
-    strip.addEventListener("touchend",    releaseAll, { passive: true });
-    strip.addEventListener("touchcancel", releaseAll, { passive: true });
+    function onEnd(e) {
+      e.preventDefault();
+      thumb.style.transform = "translate(-50%, -50%)";
+      releaseAll();
+    }
+
+    base.addEventListener("touchend",    onEnd, { passive: false });
+    base.addEventListener("touchcancel", onEnd, { passive: false });
   }
 
-  // The script is loaded at the bottom of <body>, so the DOM is already
-  // parsed — but DOMContentLoaded may have already fired on some browsers.
-  // Guard against both cases.
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
