@@ -9,10 +9,10 @@
  */
 
 (function initClickMoveControls() {
-  // Wait for canvas and player to be initialized
+  // Wait for gameArea and player to be initialized
   setTimeout(function setupClickMoveControls() {
-    const canvas = document.getElementById("gameCanvas");
-    if (!canvas) return;
+    const gameArea = document.getElementById("gameArea");
+    if (!gameArea) return;
 
     // Configuration
     const STOP_DISTANCE_THRESHOLD = 30; // pixels - distance at which to stop moving
@@ -25,10 +25,10 @@
     let updateIntervalId = null;
 
     /**
-     * Get canvas-relative coordinates from a pointer event
+     * Get gameArea-relative coordinates from a pointer event
      */
     function getCanvasCoords(event) {
-      const rect = canvas.getBoundingClientRect();
+      const rect = gameArea.getBoundingClientRect();
       const clientX = event.touches ? event.touches[0].clientX : event.clientX;
       const clientY = event.touches ? event.touches[0].clientY : event.clientY;
 
@@ -226,17 +226,17 @@
       targetY = null;
     }
 
-    // Attach event listeners to canvas
-    canvas.addEventListener("mousedown", handleMouseDown);
-    canvas.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp); // Global to catch releases outside canvas
+    // Attach event listeners to gameArea
+    gameArea.addEventListener("mousedown", handleMouseDown);
+    gameArea.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp); // Global to catch releases outside gameArea
 
-    canvas.addEventListener("touchstart", handleTouchStart);
-    canvas.addEventListener("touchmove", handleTouchMove);
-    canvas.addEventListener("touchend", handleTouchEnd);
-    canvas.addEventListener("touchcancel", handleTouchEnd);
+    gameArea.addEventListener("touchstart", handleTouchStart);
+    gameArea.addEventListener("touchmove", handleTouchMove);
+    gameArea.addEventListener("touchend", handleTouchEnd);
+    gameArea.addEventListener("touchcancel", handleTouchEnd);
 
-    // Prevent scrolling while interacting with canvas on touch devices
-    canvas.style.touchAction = "none";
+    // Prevent scrolling while interacting with gameArea on touch devices
+    gameArea.style.touchAction = "none";
   }, 100); // Small delay to ensure canvas and player are initialized
 })();
