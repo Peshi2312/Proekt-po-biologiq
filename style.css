@@ -390,7 +390,7 @@ body {
   touch-action: none;
 }
 
-@media (max-width: 768px), (pointer: coarse) {
+@media (max-width: 768px) {
   .joycon-strip {
     display: flex;
   }
@@ -573,3 +573,4 @@ body {
   transition: box-shadow 0.1s ease-out;
   touch-action: none;
 }
+

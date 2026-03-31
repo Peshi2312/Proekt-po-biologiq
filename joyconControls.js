@@ -40,14 +40,23 @@
     held.clear();
   }
 
+  function isTouchDevice() {
+    return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  }
+
   function bindBtn(btn) {
     const key = btn.dataset.key;
-    if (!key) return; // action buttons have no data-key — they're decorative
+    if (!key) return; // action buttons (ABXY) are decorative
 
     function onStart(e) {
       e.preventDefault();
       btn.classList.add("pressed");
       press(key);
+    }
+
+    function onMove(e) {
+      // Prevent scroll from cancelling the button press
+      e.preventDefault();
     }
 
     function onEnd(e) {
@@ -57,23 +66,45 @@
     }
 
     btn.addEventListener("touchstart", onStart, { passive: false });
-    btn.addEventListener("touchend", onEnd, { passive: false });
-    btn.addEventListener("touchcancel", onEnd, { passive: false });
+    btn.addEventListener("touchmove",  onMove,  { passive: false });
+    btn.addEventListener("touchend",   onEnd,   { passive: false });
+    btn.addEventListener("touchcancel", onEnd,  { passive: false });
 
-    // Mouse fallback (useful when testing on desktop)
-    btn.addEventListener("mousedown", onStart);
-    btn.addEventListener("mouseup", onEnd);
+    // Mouse fallback for desktop testing
+    btn.addEventListener("mousedown",  onStart);
+    btn.addEventListener("mouseup",    onEnd);
     btn.addEventListener("mouseleave", onEnd);
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
+  function init() {
     const strip = document.getElementById("joyconControls");
     if (!strip) return;
 
+    // Force-show on touch devices — don't rely solely on the CSS media query,
+    // which can miss phones with unusual viewport widths or zoom levels.
+    if (isTouchDevice()) {
+      strip.style.display = "flex";
+    }
+
+    // Prevent the whole strip from scrolling the page while the player
+    // is using the controls (critical for real phones).
+    strip.addEventListener("touchmove", function (e) {
+      e.preventDefault();
+    }, { passive: false });
+
     strip.querySelectorAll(".dpad-btn").forEach(bindBtn);
 
-    // Release all held keys if touch leaves the strip entirely
-    strip.addEventListener("touchend", releaseAll, { passive: true });
+    // Release all keys if touch lifts anywhere on the strip
+    strip.addEventListener("touchend",    releaseAll, { passive: true });
     strip.addEventListener("touchcancel", releaseAll, { passive: true });
-  });
+  }
+
+  // The script is loaded at the bottom of <body>, so the DOM is already
+  // parsed — but DOMContentLoaded may have already fired on some browsers.
+  // Guard against both cases.
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 })();
